@@ -14,41 +14,56 @@ const sectionTitle = document.getElementById('section-title');
 const searchInput = document.getElementById("search-input");
 const movieGrid = document.getElementById('movie-grid');
 const modal = document.getElementById('movie-modal');
+// ==============================================================================
+// Utility Functions
+// ==============================================================================
 export function modalHtmlUpdate(movieDetails) {
     const modalImage = document.getElementById('modal-img');
-    modalImage.src = `${IMG_URL}${movieDetails.poster_path}`;
     const modalTitle = document.getElementById('modal-title');
-    modalTitle.textContent = movieDetails.title;
     const modalTagline = document.getElementById('modal-tagline');
-    modalTagline.textContent = movieDetails.tagline;
     const modalRating = document.getElementById('modal-rating');
-    modalRating.textContent = `⭐ ${movieDetails.vote_average.toFixed(1)}`;
     const modalRuntime = document.getElementById('modal-runtime');
-    modalRuntime.textContent = `⏱️ ${movieDetails.runtime} min`;
     const modalYear = document.getElementById('modal-year');
-    modalYear.textContent = movieDetails.release_date ? `📅 ${movieDetails.release_date.substring(0, 4)}` : "📅 N/A";
     const modalGenres = document.getElementById('modal-genres');
-    modalGenres.innerHTML = movieDetails.genres || [].map(genre => `<span class="btn-outline">${genre.name}</span>`).join('');
     const modalPlot = document.getElementById('modal-plot');
-    modalPlot.textContent = movieDetails.overview;
-    // YouTube Trailer Link
-    const trailerBtn = document.querySelector('.btn-link.yt');
-    trailerBtn.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(movieDetails.title + ' trailer')}`;
-    trailerBtn.title = `Watch ${movieDetails.title} trailer on YouTube`;
-    trailerBtn.target = "_blank"; // Open in new tab
+    try {
+        modalImage.src = movieDetails.poster_path ? `${IMG_URL}${movieDetails.poster_path}` : "no-image.png";
+        modalTitle.textContent = movieDetails.title;
+        modalTagline.textContent = movieDetails.tagline;
+        modalRating.textContent = `⭐ ${movieDetails.vote_average.toFixed(1)}`;
+        modalRuntime.textContent = `⏱️ ${movieDetails.runtime} min`;
+        modalYear.textContent = movieDetails.release_date ? `📅 ${movieDetails.release_date.substring(0, 4)}` : "📅 N/A";
+        modalGenres.innerHTML = (movieDetails.genres || []).map(genre => `<span class="btn-outline">${genre.name}</span>`).join('');
+        modalPlot.textContent = movieDetails.overview;
+        // YouTube Trailer Link
+        const trailerBtn = document.querySelector('.btn-link.yt');
+        trailerBtn.href = `https://www.youtube.com/results?search_query=${encodeURIComponent(movieDetails.title + ' trailer')}`;
+        trailerBtn.title = `Watch ${movieDetails.title} trailer on YouTube`;
+        trailerBtn.target = "_blank"; // Open in new tab
 
-    // Netflix Search Link
-    const netflixBtn = document.querySelector('.btn-link.nf');
-    netflixBtn.href = `https://www.netflix.com/search?q=${encodeURIComponent(movieDetails.title)}`;
-    netflixBtn.target = "_blank"; // Open in new tab
-    netflixBtn.title = `Search ${movieDetails.title} on Netflix`;
+        // Netflix Search Link
+        const netflixBtn = document.querySelector('.btn-link.nf');
+        netflixBtn.href = `https://www.netflix.com/search?q=${encodeURIComponent(movieDetails.title)}`;
+        netflixBtn.target = "_blank"; // Open in new tab
+        netflixBtn.title = `Search ${movieDetails.title} on Netflix`;
 
-    // Amazon Prime Search Link
-    const primeBtn = document.querySelector('.btn-link.amz');
-    primeBtn.href = `https://www.amazon.com/s?k=${encodeURIComponent(movieDetails.title + ' movie')}&i=instant-video`;
-    primeBtn.target = "_blank"; // Open in new tab
-    primeBtn.title = `Search ${movieDetails.title} on Amazon Prime`;
-    modal.classList.remove('hidden');
+        // Amazon Prime Search Link
+        const primeBtn = document.querySelector('.btn-link.amz');
+        primeBtn.href = `https://www.amazon.com/s?k=${encodeURIComponent(movieDetails.title + ' movie')}&i=instant-video`;
+        primeBtn.target = "_blank"; // Open in new tab
+        primeBtn.title = `Search ${movieDetails.title} on Amazon Prime`;
+        modal.classList.remove('hidden');
+    }
+    catch (error) {
+        // ✅ Correct approach
+        modal.innerHTML = `
+    <button id="close-modal" class="close-modal">&times;</button> <div class="error-message">
+        <i class="fas fa-exclamation-triangle fa-3x"></i>
+        <h3>${error.message}</h3>
+    </div>
+`;
+        modal.classList.remove('hidden');
+    }
 }
 export function showFavorites() {
     const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
@@ -69,6 +84,7 @@ export function renderMovies(moviesArray, errorMessage = "No movies found") {
     const moviesArrayHtml = moviesArray.map((movie) => {
         const isFavorite = favorites.some(fav => fav.id == movie.id);
         const heartClass = isFavorite ? "fas fa-heart" : "far fa-heart";
+        const favTitle = heartClass === "fas fa-heart" ? "Remove from Favorites" : "Add to Favorites";
         let imageUrl = "";
         if (movie.poster_path) {
             imageUrl = movie.poster_path.startsWith("http") ? movie.poster_path : `${IMG_URL}${movie.poster_path}`;
@@ -78,7 +94,7 @@ export function renderMovies(moviesArray, errorMessage = "No movies found") {
     <div class="movie-card" data-id="${movie.id}">
         <div class="card-img-wrapper">
             <img src="${imageUrl}" alt="${movie.title}">
-            <button class="fav-btn" id="fav-btn" title="Add to Favorites"><i class="${heartClass} fa-heart"></i></button> 
+            <button class="fav-btn" title="${favTitle}"><i class="${heartClass} fa-heart"></i></button> 
         </div>
         <div class="card-info">
             <h4>${movie.title}</h4>
@@ -98,22 +114,26 @@ export async function getMovieDetails(movieId) {
 export async function handleSearch() {
     const searchTerm = searchInput.value.trim();
     if (searchTerm.length > 1) {
-        const searchUrl = `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${searchTerm}`;
         const spinner = document.getElementById("loading-spinner");
-        spinner.classList.remove("hidden");
-        const data = await fetchApiData(searchUrl);
-        searchInput.value = '';
-        const movies = data[0].results;
-        const moviesHtml = renderMovies(movies, `No results found for "${searchTerm}"`);
-        spinner.classList.add('hidden');
-
-        sectionTitle.textContent = `Search Results for "${searchTerm}"`;
-        movieGrid.innerHTML = moviesHtml;
+        try {
+            const searchUrl = `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${searchTerm}`;
+            spinner.classList.remove("hidden");
+            const data = await fetchApiData(searchUrl);
+            searchInput.value = '';
+            const movies = data[0].results;
+            const moviesHtml = renderMovies(movies, `No results found for "${searchTerm}"`);
+            sectionTitle.textContent = `Search Results for "${searchTerm}"`;
+            movieGrid.innerHTML = moviesHtml;
+        } catch (error) {
+            displayError("An error occurred while fetching search results.\nPlease try again later.");
+        }
+        finally {
+            spinner.classList.add("hidden");
+        }
     }
     else {
         searchInput.value = '';
         alert("Please enter at least 2 characters to search.");
-
     }
 }
 export function handleModalClick(event) {
@@ -142,9 +162,11 @@ export function toggleFavorite(card) {
     const newLIST = favorites.filter(movie => movie.id !== id);
     if (favorites.length === newLIST.length) {
         card.querySelector(".fav-btn i").classList.replace("far", "fas");
+        card.querySelector(".fav-btn").title = "Remove from Favorites";
         favorites = [...favorites, movieData];
     } else {
         card.querySelector(".fav-btn i").classList.replace("fas", "far");
+        card.querySelector(".fav-btn").title = "Add to Favorites";
         favorites = newLIST;
     }
     localStorage.setItem("favorites", JSON.stringify(favorites));
@@ -159,17 +181,25 @@ export async function handleCardClick(event) {
         }
         else {
             const movieId = clickedCard.dataset.id;
+           try {
             const movieDetails = await getMovieDetails(movieId);
             modalHtmlUpdate(movieDetails);
+           } catch (error) {
+            alert("An error occurred while fetching movie details.\nPlease try again later.");
+           }
         }
     }
 }
 export async function startApp() {
-    const moviesData = await fetchApiData(trendingUrl);
-    const trendingMovies = moviesData[0].results;
-    const trendingMoviesHtml = renderMovies(trendingMovies, "No trending movies found");
-    sectionTitle.textContent = "Trending Movies";
-    movieGrid.innerHTML = trendingMoviesHtml;
+    try {
+        const moviesData = await fetchApiData(trendingUrl);
+        const trendingMovies = moviesData[0].results;
+        const trendingMoviesHtml = renderMovies(trendingMovies, "No trending movies found");
+        sectionTitle.textContent = "Trending Movies";
+        movieGrid.innerHTML = trendingMoviesHtml;
+    } catch (error) {
+        displayError("An error occurred while fetching trending movies.\nPlease try again later.");
+    }
 }
 export async function fetchApiData(...urls) {
     const fetchCalls = urls.map(url => fetch(url));
@@ -187,3 +217,12 @@ export async function fetchApiData(...urls) {
         return Promise.reject(error);
     }
 };
+const displayError = (message) => {
+    const errorHtml = `
+    <div class="error-message">
+        <i class="fas fa-exclamation-triangle fa-3x"></i>
+        <h3>${message}</h3>
+    </div>
+    `;
+    movieGrid.innerHTML = errorHtml;
+}
