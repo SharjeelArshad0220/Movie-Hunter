@@ -93,6 +93,10 @@ body {
     top: 0;
     z-index: 100;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
 }
 
 .logo h1 {
@@ -113,6 +117,7 @@ body {
     cursor: pointer;
     margin-left: 20px;
     transition: var(--transition);
+    gap: 10px;
 }
 
 .nav-btn:hover,

@@ -14,6 +14,7 @@ const sectionTitle = document.getElementById('section-title');
 const searchInput = document.getElementById("search-input");
 const movieGrid = document.getElementById('movie-grid');
 const modal = document.getElementById('movie-modal');
+const spinner = document.getElementById("loading-spinner");
 // ==============================================================================
 // Utility Functions
 // ==============================================================================
@@ -85,20 +86,16 @@ export function renderMovies(moviesArray, errorMessage = "No movies found") {
         const isFavorite = favorites.some(fav => fav.id == movie.id);
         const heartClass = isFavorite ? "fas fa-heart" : "far fa-heart";
         const favTitle = heartClass === "fas fa-heart" ? "Remove from Favorites" : "Add to Favorites";
-        let imageUrl = "";
-        if (movie.poster_path) {
-            imageUrl = movie.poster_path.startsWith("http") ? movie.poster_path : `${IMG_URL}${movie.poster_path}`;
-        }
-        else { imageUrl = "no-image.png"; }
+        let imageUrl = movie.poster_path ? `${IMG_URL}${movie.poster_path}` : "no-image.png";
         const cardHtml = `
-    <div class="movie-card" data-id="${movie.id}">
+    <div class="movie-card" data-id="${movie.id}" data-poster-path="${movie.poster_path||""}">
         <div class="card-img-wrapper">
             <img src="${imageUrl}" alt="${movie.title}">
             <button class="fav-btn" title="${favTitle}"><i class="${heartClass} fa-heart"></i></button> 
         </div>
         <div class="card-info">
             <h4>${movie.title}</h4>
-            <p>⭐ ${Number(movie.vote_average).toFixed(1)}</p>
+            <p>⭐ ${(Number(movie.vote_average)||0).toFixed(1)}</p>
         </div>
     </div>
 `;
@@ -114,7 +111,6 @@ export async function getMovieDetails(movieId) {
 export async function handleSearch() {
     const searchTerm = searchInput.value.trim();
     if (searchTerm.length > 1) {
-        const spinner = document.getElementById("loading-spinner");
         try {
             const searchUrl = `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${searchTerm}`;
             spinner.classList.remove("hidden");
@@ -125,6 +121,7 @@ export async function handleSearch() {
             sectionTitle.textContent = `Search Results for "${searchTerm}"`;
             movieGrid.innerHTML = moviesHtml;
         } catch (error) {
+            sectionTitle.textContent = `Search Results for "${searchTerm}"`;
             displayError("An error occurred while fetching search results.\nPlease try again later.");
         }
         finally {
@@ -153,10 +150,7 @@ export function toggleFavorite(card) {
     // Rating mein se '⭐ ' hata dete hain taake sirf number bache (API style)
     const vote_average = card.querySelector("p").innerText.replace("⭐ ", "");
 
-    // Image URL poora hai, isay 'poster_path' bolenge
-    const poster_path = card.querySelector("img").src;
-
-    // 2. Object banao API keys ke sath
+    const poster_path = card.querySelector("img").dataset.posterPath || card.querySelector("img").src.includes("no-image.png") ? null : card.querySelector("img").src.replace(IMG_URL, "");
     const movieData = { id, title, vote_average, poster_path };
     let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
     const newLIST = favorites.filter(movie => movie.id !== id);
@@ -192,13 +186,17 @@ export async function handleCardClick(event) {
 }
 export async function startApp() {
     try {
+        spinner.classList.remove("hidden");
         const moviesData = await fetchApiData(trendingUrl);
         const trendingMovies = moviesData[0].results;
         const trendingMoviesHtml = renderMovies(trendingMovies, "No trending movies found");
         sectionTitle.textContent = "Trending Movies";
         movieGrid.innerHTML = trendingMoviesHtml;
     } catch (error) {
+        sectionTitle.textContent = "Trending Movies";
         displayError("An error occurred while fetching trending movies.\nPlease try again later.");
+    }
+    finally {        spinner.classList.add("hidden");
     }
 }
 export async function fetchApiData(...urls) {
