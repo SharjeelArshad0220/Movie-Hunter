@@ -3,19 +3,19 @@
 MovieHunt is a modern, responsive web application that lets you discover trending movies, search through millions of titles, and get detailed information – all powered by **The Movie Database (TMDB) API**. Save your favourites locally and explore where to watch them on popular streaming platforms.
 
 ## Home Page
-![Home Page](/movie%20hunter/screenshots/Home%20page.png) 
+![Home Page](/screenshots/Home%20page.png) 
 ---
 ## Favorites Tab 
-![Favorites Tab](/movie%20hunter/screenshots/favs%20tab.png)  
+![Favorites Tab](/screenshots/favs%20tab.png)  
 ---
 ## Search state
-![Search state](/movie%20hunter/screenshots/search%20state.jpg)  
+![Search state](/screenshots/search%20state.jpg)  
 ---
 ## Loading state
-![Loading state](/movie%20hunter/screenshots/Loading%20state.png)
+![Loading state](screenshots/Loading%20state.png)
 ---
 ## Empty state
-![Empty state](/movie%20hunter/screenshots/Empty%20state.png)
+![Empty state](screenshots/Empty%20state.png)
 ---
 
 ## ✨ Features
@@ -54,7 +54,7 @@ MovieHunt is a modern, responsive web application that lets you discover trendin
 ### Installation
 
 1. **Clone the repository**
-  - git clone [https://github.com/SharjeelArshad0220/moviehunt.git](https://github.com/SharjeelArshad0220/Movie-Hunter/)
+  - git clone [https://github.com/SharjeelArshad0220/Movie-Hunter/](https://github.com/SharjeelArshad0220/Movie-Hunter/)
   - cd moviehunt
 
 2. **Open the app**
